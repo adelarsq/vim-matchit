@@ -1,7 +1,9 @@
 "  matchit.vim: (global plugin) Extended "%" matching
-"  Last Change: Fri Jan 25 10:00 AM 2008 EST
+"  Last Change: 2016 Aug 21
 "  Maintainer:  Benji Fisher PhD   <benji@member.AMS.org>
 "  Version:     1.13.2, for Vim 6.3+
+"		Fix from Fernando Torres included.
+"		Improvement from Ken Takata included.
 "  URL:		http://www.vim.org/script.php?script_id=39
 
 " Documentation:
@@ -43,6 +45,7 @@ endif
 let loaded_matchit = 1
 let s:last_mps = ""
 let s:last_words = ":"
+let s:patBR = ""
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -120,9 +123,8 @@ function! s:Match_wrapper(word, forward, mode) range
     execute "let match_words =" b:match_words
   endif
 " Thanks to Preben "Peppe" Guldberg and Bram Moolenaar for this suggestion!
-  if (match_words != s:last_words) || (&mps != s:last_mps) ||
-    \ exists("b:match_debug")
-    let s:last_words = match_words
+  if (match_words != s:last_words) || (&mps != s:last_mps)
+      \ || exists("b:match_debug")
     let s:last_mps = &mps
     " The next several lines were here before
     " BF started messing with this script.
@@ -131,9 +133,10 @@ function! s:Match_wrapper(word, forward, mode) range
     " let default = substitute(escape(&mps, '[$^.*~\\/?]'), '[,:]\+',
     "  \ '\\|', 'g').'\|\/\*\|\*\/\|#if\>\|#ifdef\>\|#else\>\|#elif\>\|#endif\>'
     let default = escape(&mps, '[$^.*~\\/?]') . (strlen(&mps) ? "," : "") .
-      \ '\/\*:\*\/,#if\%(def\)\=:#else\>:#elif\>:#endif\>'
+      \ '\/\*:\*\/,#\s*if\%(def\)\=:#\s*else\>:#\s*elif\>:#\s*endif\>'
     " s:all = pattern with all the keywords
     let match_words = match_words . (strlen(match_words) ? "," : "") . default
+    let s:last_words = match_words
     if match_words !~ s:notslash . '\\\d'
       let s:do_BR = 0
       let s:pat = match_words
@@ -147,6 +150,10 @@ function! s:Match_wrapper(word, forward, mode) range
     if exists("b:match_debug")
       let b:match_pat = s:pat
     endif
+    " Reconstruct the version with unresolved backrefs.
+    let s:patBR = substitute(match_words.',',
+      \ s:notslash.'\zs[,:]*,[,:]*', ',', 'g')
+    let s:patBR = substitute(s:patBR, s:notslash.'\zs:\{2,}', ':', 'g')
   endif
 
   " Second step:  set the following local variables:
@@ -191,14 +198,10 @@ function! s:Match_wrapper(word, forward, mode) range
   " group = colon-separated list of patterns, one of which matches
   "       = ini:mid:fin or ini:fin
   "
-  " Reconstruct the version with unresolved backrefs.
-  let patBR = substitute(match_words.',',
-    \ s:notslash.'\zs[,:]*,[,:]*', ',', 'g')
-  let patBR = substitute(patBR, s:notslash.'\zs:\{2,}', ':', 'g')
   " Now, set group and groupBR to the matching group: 'if:endif' or
   " 'while:endwhile' or whatever.  A bit of a kluge:  s:Choose() returns
   " group . "," . groupBR, and we pick it apart.
-  let group = s:Choose(s:pat, matchline, ",", ":", prefix, suffix, patBR)
+  let group = s:Choose(s:pat, matchline, ",", ":", prefix, suffix, s:patBR)
   let i = matchend(group, s:notslash . ",")
   let groupBR = strpart(group, i)
   let group = strpart(group, 0, i-1)
@@ -303,7 +306,7 @@ fun! s:CleanUp(options, mode, startline, startcol, ...)
       let regexp = s:Wholematch(matchline, a:1, currcol-1)
       let endcol = matchend(matchline, regexp)
       if endcol > currcol  " This is NOT off by one!
-	execute "normal!" . (endcol - currcol) . "l"
+	call cursor(0, endcol)
       endif
     endif " a:0
   endif " a:mode != "o" && etc.
@@ -357,7 +360,7 @@ fun! s:InsertRefs(groupBR, prefix, group, suffix, matchline)
       execute s:Ref(ini, d, "start", "len")
       let ini = strpart(ini, 0, start) . backref . strpart(ini, start+len)
       let tailBR = substitute(tailBR, s:notslash . '\zs\\' . d,
-	\ escape(backref, '\\'), 'g')
+	\ escape(backref, '\\&'), 'g')
     endif
     let d = d-1
   endwhile
@@ -649,7 +652,7 @@ fun! s:MultiMatch(spflag, mode)
   "   s:all	regexp based on s:pat and the default groups
   " This part is copied and slightly modified from s:Match_wrapper().
   let default = escape(&mps, '[$^.*~\\/?]') . (strlen(&mps) ? "," : "") .
-    \ '\/\*:\*\/,#if\%(def\)\=:#else\>:#elif\>:#endif\>'
+    \ '\/\*:\*\/,#\s*if\%(def\)\=:#\s*else\>:#\s*elif\>:#\s*endif\>'
   " Allow b:match_words = "GetVimMatchWords()" .
   if b:match_words =~ ":"
     let match_words = b:match_words
@@ -660,6 +663,7 @@ fun! s:MultiMatch(spflag, mode)
     \ exists("b:match_debug")
     let s:last_words = match_words
     let s:last_mps = &mps
+    let match_words = match_words . (strlen(match_words) ? "," : "") . default
     if match_words !~ s:notslash . '\\\d'
       let s:do_BR = 0
       let s:pat = match_words
@@ -667,8 +671,8 @@ fun! s:MultiMatch(spflag, mode)
       let s:do_BR = 1
       let s:pat = s:ParseWords(match_words)
     endif
-    let s:all = '\%(' . substitute(s:pat . (strlen(s:pat)?",":"") . default,
-      \	'[,:]\+','\\|','g') . '\)'
+    let s:all = '\%(' . substitute(s:pat . (strlen(s:pat) ? "," : "") . default,
+	\ '[,:]\+', '\\|', 'g') . '\)'
     if exists("b:match_debug")
       let b:match_pat = s:pat
     endif
@@ -808,5 +812,6 @@ fun! s:ParseSkip(str)
 endfun
 
 let &cpo = s:save_cpo
+unlet s:save_cpo
 
 " vim:sts=2:sw=2:
