@@ -11,3 +11,7 @@ With [vim-plug](https://github.com/junegunn/vim-plug)
 ```vim
 Plug 'https://github.com/adelarsq/vim-matchit'
 ```
+
+## References
+
+- [Evil Matchit](https://github.com/redguardtoo/evil-matchit)
