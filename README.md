@@ -12,6 +12,10 @@ With [vim-plug](https://github.com/junegunn/vim-plug)
 Plug 'https://github.com/adelarsq/vim-matchit'
 ```
 
+## Alternatives
+
+- [vim match-up](https://github.com/andymass/vim-matchup)
+
 ## References
 
 - [Evil Matchit](https://github.com/redguardtoo/evil-matchit)
