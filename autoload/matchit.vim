@@ -1,6 +1,6 @@
 "  matchit.vim: (global plugin) Extended "%" matching
 "  autload script of matchit plugin, see ../plugin/matchit.vim
-"  Last Change: 2019 Oct 24
+"  Last Change: Mar 01, 2020
 
 let s:last_mps = ""
 let s:last_words = ":"
@@ -46,7 +46,9 @@ function matchit#Match_wrapper(word, forward, mode) range
   " is at the correct end of the Visual range:
   if a:mode == "v"
     execute "normal! gv\<Esc>"
-  elseif a:mode == "o" && mode(1) !~# '[vV]'
+  elseif a:mode == "o" && mode(1) !~# '[vV]'
+    exe "norm! v"
+  elseif a:mode == "n" && mode(1) =~# 'ni'
     exe "norm! v"
   endif
   " In s:CleanUp(), we may need to check whether the cursor moved forward.
@@ -577,7 +579,7 @@ fun! matchit#MultiMatch(spflag, mode)
   let startpos = [line("."), col(".")]
   " save v:count1 variable, might be reset from the restore_cursor command
   let level = v:count1
-  if a:mode == "o" && mode(1) !~# '[vV]'
+  if a:mode == "o" && mode(1) !~# '[vV]'
     exe "norm! v"
   endif
 
@@ -760,3 +762,4 @@ let &cpo = s:save_cpo
 unlet s:save_cpo
 
 " vim:sts=2:sw=2:et:
+
