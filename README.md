@@ -18,6 +18,12 @@ With [vim-plug](https://github.com/junegunn/vim-plug)
 Plug 'https://github.com/adelarsq/vim-matchit'
 ```
 
+With Vim package feature should be cloned below `pack/dist/opt` in your runtime path (`~/.vim/pack/dist/opt/matchit`) then activated with:
+
+```vim
+packadd! matchit
+```
+
 ## Alternatives
 
 - [vim match-up](https://github.com/andymass/vim-matchup)
