@@ -2,7 +2,7 @@
 
 This plugin provides extended matching for the `%` operator.
 
-This repository mantain the last version from the [matchit.vim](https://github.com/vim/vim/tree/master/runtime/pack/dist/opt/matchit) plugin from the official Vim repository, allowing to use with plugin managers.
+This repository maintain the last version from the [matchit.vim](https://github.com/vim/vim/tree/master/runtime/pack/dist/opt/matchit) plugin from the official Vim repository, allowing to use with plugin managers.
 
 **Main Repository:** https://github.com/chrisbra/matchit
 
