@@ -31,3 +31,9 @@ packadd! matchit
 ## References
 
 - [Evil Matchit](https://github.com/redguardtoo/evil-matchit)
+
+## License & Copyright
+
+The Vim license (see :h license) applies to the Vim plugin.
+
+NO WARRANTY, EXPRESS OR IMPLIED. USE AT-YOUR-OWN-RISK
